@@ -1,12 +1,12 @@
 
 
-from pydantic import BaseModel , Field
+from pydantic import BaseModel, Field
 from typing import Optional
 from uuid import UUID
 
 
 class TaskBase(BaseModel):
-    title: str
+    title: str = Field(min_length=1)
     description: Optional[str] = None
     completed: bool = False
 
@@ -16,7 +16,7 @@ class TaskCreate(TaskBase):
 
 
 class TaskUpdate(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=1)
     description: Optional[str] = None
     completed: Optional[bool] = None
 

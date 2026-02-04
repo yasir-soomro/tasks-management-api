@@ -1,6 +1,6 @@
 
 
-from app.schemas.tasks_model import Task, TaskCreate, TaskUpdate
+from app.schemas.tasks_model import Task, TaskBase, TaskCreate, TaskUpdate
 from fastapi import APIRouter, HTTPException
 from uuid import UUID, uuid4
 
@@ -54,21 +54,21 @@ async def update_task_partial(task_id: UUID, updated_task: TaskUpdate):
     return task
 
 @router.put("/{task_id}", response_model=Task)
-async def update_task(task_id: UUID, updated_task: TaskUpdate):
+async def update_task(task_id: UUID, updated_task: TaskBase):
     # Find the task
     task = next((t for t in DB_Tasks if t.id == task_id), None)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    # Update only provided fields
-    updated_data = updated_task.model_dump(exclude_unset=True)
-    if "title" in updated_data:
-        new_title = updated_data["title"].strip().lower()
-        for existing in DB_Tasks:
-            if existing.id != task_id and existing.title.strip().lower() == new_title:
-                raise HTTPException(status_code=400, detail="Task already exists")
-    for key, value in updated_data.items():
-        setattr(task, key, value)
+    # Full replace (all fields required)
+    new_title = updated_task.title.strip().lower()
+    for existing in DB_Tasks:
+        if existing.id != task_id and existing.title.strip().lower() == new_title:
+            raise HTTPException(status_code=400, detail="Task already exists")
+
+    task.title = updated_task.title
+    task.description = updated_task.description
+    task.completed = updated_task.completed
 
     return task
 
